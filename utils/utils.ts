@@ -1,16 +1,25 @@
-import puppeteer from "puppeteer";
+import { Browser } from "puppeteer";
+import xlsx from "xlsx";
 
-export async function getDOMBody(url: string): Promise<string> {
-  const browser = await puppeteer.launch({ headless: true });
+export async function getDOMBody(
+  browser: Browser,
+  url: string
+): Promise<string> {
   const page = await browser.newPage();
 
-  await page.goto(url, {
-    waitUntil: "domcontentloaded",
-  });
+  try {
+    await page.goto(url, {
+      waitUntil: "domcontentloaded",
+    });
+  } catch (error) {
+    console.error(`Failed to navigate to ${url}:`, error);
+    await page.close();
+    return "";
+  }
 
   const body = await page.$eval("body", (el) => el.innerHTML);
 
-  await browser.close();
+  await page.close();
   return body;
 }
 
