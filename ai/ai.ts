@@ -8,7 +8,7 @@ const client = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY || "",
 });
 
-async function extractData(rawData: string) {
+export async function extractData(rawData: string) {
   // const data = await fetchData();
   const response = await client.models.generateContent({
     model: "gemini-2.5-flash",
