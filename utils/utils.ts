@@ -13,3 +13,13 @@ export async function getDOMBody(url: string): Promise<string> {
   await browser.close();
   return body;
 }
+
+export function readSourcesFromExcel(path: string) {
+  const workbook = xlsx.readFile(path);
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+
+  const rows: any[] = xlsx.utils.sheet_to_json(sheet);
+
+  return rows;
+}
