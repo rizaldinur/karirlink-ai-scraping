@@ -137,3 +137,4 @@ dist
 
 # output data
 output.json
+/storage
