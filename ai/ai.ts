@@ -15,10 +15,14 @@ export async function extractData(rawData: string) {
     contents: `
     You have to extract job listings from the following raw HTML content: ${rawData}.
     Extract relevant information according to the provided JSON schema for each job listing.
+    For salary, you have to decide between 3 options specified below:
+    1) { "type": "fixed" (Fixed salary in a period of time), "amount": The amount of the salary }
+    2) { "type": "range" (Salary in certain range), min: The lower limit, max: The upper limit }
+    3) { "type": "not specified" (salary info not provided) }
       
-    If you cannot extract any meaningful job listing data, return an empty list [].
+    If you cannot extract any meaningful job listing data, return empty string "".
 
-	Else, Return list of jobs in JSON format only as specified by the schema.
+	  Else, Return list of jobs in JSON format only as specified by the schema.
     `,
     config: {
       responseMimeType: "application/json",
@@ -26,6 +30,7 @@ export async function extractData(rawData: string) {
     },
   });
 
-  // await fs.writeFile("output.json", response.text || JSON.stringify([{}]));
-  return response.text || JSON.stringify([{}]);
+  const data = response.text || JSON.stringify([]);
+
+  return { data, usage: response.usageMetadata };
 }
