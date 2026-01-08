@@ -1,3 +1,4 @@
+import { readFile } from "fs/promises";
 import { Browser } from "puppeteer";
 import xlsx from "xlsx";
 
@@ -5,22 +6,20 @@ export async function getDOMBody(
   browser: Browser,
   url: string
 ): Promise<string> {
-  const page = await browser.newPage();
-
   try {
+    const page = await browser.newPage();
     await page.goto(url, {
       waitUntil: "domcontentloaded",
     });
-  } catch (error) {
-    console.error(`Failed to navigate to ${url}:`, error);
+
+    const body = await page.$eval("body", (el) => el.innerHTML);
+
     await page.close();
+    return body;
+  } catch (error: any) {
+    console.error("\n", error.message);
     return "";
   }
-
-  const body = await page.$eval("body", (el) => el.innerHTML);
-
-  await page.close();
-  return body;
 }
 
 export function readSourcesFromExcel(path: string) {
@@ -31,4 +30,15 @@ export function readSourcesFromExcel(path: string) {
   const rows: any[] = xlsx.utils.sheet_to_json(sheet);
 
   return rows;
+}
+
+async function sumTotalUsageToken() {
+  const content = await readFile("./logs/usage-log.json", "utf-8");
+  const usageData: any[] = JSON.parse(content);
+  // Assuming usageData is an array of objects with a 'totalTokens' field
+  const totalTokens = usageData.reduce(
+    (sum, item) => sum + (item.totalTokenCount || 0),
+    0
+  );
+  console.log(`Total tokens used: ${totalTokens}`);
 }
