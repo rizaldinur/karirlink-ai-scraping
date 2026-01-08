@@ -32,7 +32,7 @@ export function readSourcesFromExcel(path: string) {
   return rows;
 }
 
-async function sumTotalUsageToken() {
+export async function sumTotalUsageToken() {
   const content = await readFile("./logs/usage-log.json", "utf-8");
   const usageData: any[] = JSON.parse(content);
   // Assuming usageData is an array of objects with a 'totalTokens' field
