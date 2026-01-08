@@ -1,116 +1,60 @@
-import axios from "axios";
-import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
-import fs from "fs/promises";
-import { z } from "zod";
-import { get } from "http";
+import { writeFile, mkdir, readFile } from "fs/promises";
+import { extractData } from "./ai/ai.ts";
+import {
+  getDOMBody,
+  readSourcesFromExcel,
+  sumTotalUsageToken,
+} from "./utils/utils.ts";
+import puppeteer from "puppeteer";
 
-dotenv.config();
-
-const client = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || "",
-});
-
-const options = {
-  method: "GET",
-  url: "https://www.kalibrr.com/_next/data/U7EYscDFlyEdi6ic6P0Bg/id-ID/home/all-jobs.json",
-  params: {
-    param: "all-jobs",
-  },
-};
-
-async function getRawData() {
-  try {
-    const response = await axios.request(options);
-    return response.data.pageProps.jobs;
-  } catch (error) {
-    throw error;
-  }
-}
-
-const jobSchema = z.object({
-  title: z.string().optional(),
-  company: z.string().optional(),
-  location: z.string().optional(),
-  salary: z.union([
-    z.object({
-      type: z
-        .literal("fixed")
-        .describe(
-          "Fixed salary amount, may represent hourly, daily, monthly or yearly salary."
-        ),
-      amount: z.number(),
-    }),
-    z.object({
-      type: z.literal("range"),
-      min: z.number(),
-      max: z.number(),
-    }),
-    z.object({
-      type: z.literal("not specified"),
-    }),
-  ]),
-  job_type: z
-    .enum(["full-time", "part-time", "contract", "internship", "not specified"])
-    .default("not specified"),
-  description: z
-    .string()
-    .optional()
-    .describe(
-      "Detailed description of the job, including responsibilities and requirements."
-    ),
-  posting_date: z.string().optional(),
-  end_date: z.string().optional(),
-});
-
-// const jobListSchema = z.array(jobSchema);
-const jsonSchema = z.toJSONSchema(jobSchema.array());
-
-async function extractData(rawData: any) {
-  try {
-    // const data = await fetchData();
-
-    const response = await client.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Here is a raw job data: ${JSON.stringify(rawData)}. 
-			You have to extract each job listing data that follows the specified structure.
-      
-			Return list of jobs in JSON format only.
-			`,
-      config: {
-        responseMimeType: "application/json",
-        responseJsonSchema: jsonSchema,
-      },
-    });
-
-    // await fs.writeFile("output.json", response.text || JSON.stringify([{}]));
-    return response.text || JSON.stringify([{}]);
-  } catch (error) {
-    throw error;
-  }
-}
+const startTime = process.hrtime.bigint();
+const timer = setInterval(() => {
+  const elapsedSec = Number(process.hrtime.bigint() - startTime) / 1e9;
+  const minutes = Math.floor(elapsedSec / 60);
+  const seconds = Math.floor(elapsedSec % 60);
+  process.stdout.write(
+    `\rElapsed: ${minutes}:${seconds.toString().padStart(2, "0")} (m:ss)`
+  );
+}, 1000); // Update every 1 second
 
 async function main() {
+  const browser = await puppeteer.launch();
   try {
-    const data = await getRawData();
-    console.log(data);
+    const rows = readSourcesFromExcel("./storage/source.xlsx");
 
-    // if (data) {
-    //   const extractedData = await extractData(data);
-    //   console.log(JSON.parse(extractedData));
-    // }
-    console.log("done");
+    let extractedData: Object[] = [];
+    let usageData: any[] = [];
+
+    for (const [index, row] of rows.entries()) {
+      if (index === 5) break;
+      const body = await getDOMBody(browser, row.karirURL || "");
+      const { data, usage } = await extractData(body);
+      usageData.push(usage || {});
+      extractedData = [...extractedData, ...JSON.parse(data)];
+    }
+
+    await mkdir("./logs", { recursive: true });
+    await writeFile(
+      "./logs/usage-log.json",
+      JSON.stringify(usageData, null, 2)
+    );
+
+    await mkdir("./storage", { recursive: true });
+    await writeFile(
+      "./storage/test-result.json",
+      JSON.stringify(extractedData, null, 2)
+    );
+    await browser.close();
+    console.log("\nExtracting job listings done.");
+    console.log("\nCounting total extraction usage token...");
+    await sumTotalUsageToken();
+    process.exit(0);
   } catch (error) {
-    console.error(error);
+    console.error("\n", error);
+    await browser.close();
+    process.exit(1);
   }
 }
-// extractData();
-// fetchData().then((data) => {
-// 	console.log(data);
-// 	console.log(data?.length || 0)
-// }).catch((error) => {
-// 	console.error(error);
-// }).finally(() => {
-// 	console.log('done');
-// });
-main();
+
+await main();
+clearInterval(timer);
