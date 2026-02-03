@@ -2,11 +2,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
 import nodemailer from "nodemailer";
+import { __dirname } from "../utils/__dirname.ts";
 
 config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const date = new Date().toLocaleDateString("id-ID", {
   timeZone: "Asia/Jakarta",
   weekday: "long",
