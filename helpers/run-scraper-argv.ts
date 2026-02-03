@@ -26,11 +26,10 @@ export const argv = yargs(hideBin(process.argv))
     default: 2,
     describe: "Max pages to scrape",
   })
-  .option("maxJobDetailsNavigatorPerPage", {
-    alias: "D",
-    type: "number",
-    default: 5,
-    describe: "Max job details per page",
+  .option("mailto", {
+    type: "string",
+    default: "",
+    describe: "Recipient email of scraped result",
   })
   .help()
   .parse();
