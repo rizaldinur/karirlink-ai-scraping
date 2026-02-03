@@ -74,18 +74,26 @@ process.on("uncaughtException", (err) => {
 async function runScraper(
   resultFilepath: string = RESULT_FILE_PATH,
   usageLogFilepath: string = LOG_FILE_PATH,
-  options: ScraperOptions = {
-    headlessBrowser: true,
-    maxJobDetailsNavigatorPerPage: 3,
-    maxPagesPerSource: 2,
-  },
+  options: ScraperOptions,
 ) {
   const {
+    mailto,
     headlessBrowser: headless,
     includeCompanyFromSource,
     maxJobDetailsNavigatorPerPage,
     maxPagesPerSource,
   } = options;
+  if (!mailto) {
+    throw new Error("No email provided");
+  } else {
+    const emailSchema = z.email({
+      error: "Invalid email",
+    });
+    const result = emailSchema.safeParse(mailto);
+    if (!result.success) {
+      throw new Error(result.error.message);
+    }
+  }
   const included: string[] = [];
   if (includeCompanyFromSource && Array.isArray(includeCompanyFromSource)) {
     included.push(...includeCompanyFromSource);
@@ -473,6 +481,7 @@ console.log("Process starting...");
 
 const args = await argv;
 await runScraper(RESULT_FILE_PATH, LOG_FILE_PATH, {
+  mailto: args.mailto,
   headlessBrowser: args.headlessBrowser,
   includeCompanyFromSource:
     args.includeCompanyFromSource?.length === 1
@@ -480,6 +489,7 @@ await runScraper(RESULT_FILE_PATH, LOG_FILE_PATH, {
       : args.includeCompanyFromSource,
   maxPagesPerSource: args.maxPagesPerSource,
   maxJobDetailsNavigatorPerPage: args.maxJobDetailsNavigatorPerPage,
+  maxPagesPerSource: args.maxPagesPerSource,
 });
 
 console.timeEnd("Process finished in ");
