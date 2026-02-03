@@ -14,10 +14,16 @@ export const argv = yargs(hideBin(process.argv))
     string: true,
     describe: "Company names to include",
   })
+  .option("maxJobDetailsNavigatorPerPage", {
+    alias: "D",
+    type: "number",
+    default: 3,
+    describe: "Max job details per page",
+  })
   .option("maxPagesPerSource", {
     alias: "P",
     type: "number",
-    default: 3,
+    default: 2,
     describe: "Max pages to scrape",
   })
   .option("maxJobDetailsNavigatorPerPage", {
