@@ -23,11 +23,25 @@ import { readSourcesFromGoogleSheet } from "./utils/readSourcesFromGoogleSheet.t
 import { spawn } from "node:child_process";
 import { runCleanerScript } from "./helpers/runCleanerScript.ts";
 import { sendCSVToEmail } from "./kirim-email/send-email.ts";
+import path from "node:path";
+import { __dirname } from "./utils/__dirname.ts";
 
 const TIMESTAMP = new Date().toISOString().replace(/[:.]/g, "-");
-const LOG_FILE_PATH = "./logs/usage-log.jsonl";
-const RESULT_FILE_PATH = "./storage/test-result.jsonl";
-const CSV_RESULT_FILE_PATH = `./storage/test-result-${TIMESTAMP}.csv`;
+const LOG_FILE_PATH = path.join(__dirname, "..", "logs", "usage-log.jsonl");
+const RESULT_FILE_PATH = path.join(
+  __dirname,
+  "..",
+  "storage",
+  "test-result.jsonl",
+);
+const CSV_RESULT_FILE_PATH = path.join(
+  __dirname,
+  "..",
+  "storage",
+  `test-result-${TIMESTAMP}.csv`,
+);
+const CSV_RESULT_BASENAME = path.basename(CSV_RESULT_FILE_PATH);
+
 const USAGE_DATA: Array<any> = [];
 const EXTRACTED_DATA: Array<any> = [];
 let NUMBER_OF_SOURCES: number = 0;
