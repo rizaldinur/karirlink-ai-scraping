@@ -15,7 +15,7 @@ const date = new Date().toLocaleDateString("id-ID", {
 });
 const timestamp = new Date().toLocaleDateString("id-ID").replace(/[/]/g, "-");
 
-export async function sendCSVToEmail(filename: string) {
+export async function sendCSVToEmail(filename: string, to: string) {
   // PATH FILE CSV
   const filePath = path.join(__dirname, "..", "storage", filename);
 
@@ -30,7 +30,7 @@ export async function sendCSVToEmail(filename: string) {
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
-    to: "ameliayunisaa@gmail.com",
+    to: to,
     subject: `Hasil Scraping Daftar Lowongan Kerja - ${date}`,
     text: "Berikut terlampir file daftar lowongan kerja dalam format csv.",
     attachments: [
