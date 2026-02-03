@@ -461,11 +461,41 @@ async function runScraper(
 
     console.log("Finished extracting data from all sources.");
     console.log("\nCleaning data...");
-    const testResultFilename = CSV_RESULT_FILE_PATH.split("/")[2];
-    await runCleanerScript(testResultFilename);
+    let fileToSend: string | undefined = CSV_RESULT_BASENAME;
+    let fileToSendPath: string | undefined;
+    await runCleanerScript(CSV_RESULT_BASENAME)
+      .then((res) => {
+        console.log(res);
+        fileToSend = res.output_file;
+        fileToSendPath = res.output_path;
+      })
+      .catch((e) => {
+        console.error("Error: ", e);
+      });
 
     console.log("\nSending file to email...");
-    await sendCSVToEmail(testResultFilename);
+
+    try {
+      await sendCSVToEmail(fileToSend, mailto);
+      console.log("Sending email successful.");
+      await fs.unlink(CSV_RESULT_FILE_PATH, (err) => {
+        if (err) throw err;
+      });
+      console.log(`[DELETED] ${CSV_RESULT_FILE_PATH}`);
+      if (fileToSendPath) {
+        await fs.unlink(fileToSendPath, (err) => {
+          if (err) throw err;
+        });
+        console.log(`[DELETED] ${fileToSendPath}`);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      } else {
+        console.error("Error:", error);
+      }
+    }
+
     console.log();
   } catch (error) {
     console.error(error);
@@ -487,7 +517,6 @@ await runScraper(RESULT_FILE_PATH, LOG_FILE_PATH, {
     args.includeCompanyFromSource?.length === 1
       ? args.includeCompanyFromSource[0]
       : args.includeCompanyFromSource,
-  maxPagesPerSource: args.maxPagesPerSource,
   maxJobDetailsNavigatorPerPage: args.maxJobDetailsNavigatorPerPage,
   maxPagesPerSource: args.maxPagesPerSource,
 });
