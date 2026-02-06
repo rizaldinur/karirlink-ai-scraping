@@ -53,7 +53,3 @@ export function runCleanerScript(filePath: string): Promise<CleanerResult> {
     });
   });
 }
-
-// await runCleanerScript("test-result-2026-02-03T04-51-02-212Z.csv")
-//   .then((res) => console.log(res))
-//   .catch((e) => console.error(e));
