@@ -41,6 +41,8 @@ const USAGE_DATA: Array<any> = [];
 const EXTRACTED_DATA: Array<any> = [];
 let NUMBER_OF_SOURCES: number = 0;
 
+const IS_PROD = process.env.NODE_ENV === "production";
+
 process.on("SIGINT", () => {
   console.log("\nProcess interrupted.");
   console.log("Menganalisis hasil akhir...");
@@ -64,7 +66,6 @@ process.on("uncaughtException", (err) => {
   console.timeEnd("Process finished in ");
   process.exit(1);
 });
-6;
 
 async function runScraper(
   resultFilepath: string = RESULT_FILE_PATH,
@@ -100,9 +101,11 @@ async function runScraper(
   }
 
   const browser = await puppeteer.launch({
-    headless: headless,
-    defaultViewport: null,
-    args: ["--start-maximized"],
+    headless: IS_PROD ? true : headless,
+    defaultViewport: IS_PROD ? undefined : null,
+    args: IS_PROD
+      ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+      : ["--start-maximized"],
   });
   if (!fs.existsSync(STORAGE_PATH)) {
     fs.mkdirSync(STORAGE_PATH);
