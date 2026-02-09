@@ -25,13 +25,12 @@ import path from "node:path";
 import { __dirname } from "./utils/__dirname.ts";
 
 const TIMESTAMP = new Date().toISOString().replace(/[:.]/g, "-");
-const STORAGE_PATH = path.join(__dirname, "..", "storage");
-const LOGS_PATH = path.join(__dirname, "..", "logs");
+const STORAGE_PATH = path.join(process.cwd(), "storage");
+const LOGS_PATH = path.join(process.cwd(), "logs");
 const LOG_FILE_PATH = path.join(LOGS_PATH, "usage-log.jsonl");
 const RESULT_FILE_PATH = path.join(STORAGE_PATH, "test-result.jsonl");
 const CSV_RESULT_FILE_PATH = path.join(
-  __dirname,
-  "..",
+  process.cwd(),
   "storage",
   `test-result-${TIMESTAMP}.csv`,
 );
