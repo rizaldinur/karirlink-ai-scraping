@@ -47,6 +47,9 @@ An intelligent web scraping tool powered by Google Gemini AI that extracts job l
 - 🌐 **Dynamic Pagination:** Automatically detects and navigates pagination using AI-determined selectors
 - 📝 **Structured Validation:** Zod schemas for data validation
 - 🔧 **Lazy Loading Support:** Handles pages with lazy-loaded content
+- 🛑 **Graceful shutdown:** Ensures clean termination of browser instances and file streams via `helpers/gracefulShutdown.ts`.
+- 📑 **CSV summary formatter:** `summarizeRunResult` supports CSV output using the CSV formatter class in `helpers/extracted-data-csv-config.ts` (create/append/read CSV summaries).
+- 🗂️ **Storage & logs at project root:** `storage/` and `logs/` are created at the project root; log and result streams use overwrite/append semantics as appropriate.
 
 ---
 
@@ -236,59 +239,56 @@ npm run dev -- --useGoogleSheets -P 2 --mailto "results@company.com"
 ## Project Structure
 
 ```
-karirlink-ai-scraping/
-├── ai/                              # AI Integration Module
-│   ├── ai.ts                       # Gemini API interaction
-│   ├── aiconfig.ts                 # AI configuration
-│   ├── extractPageDetailData.ts    # Detail page data extraction
-│   └── getPageDetailSelector.ts    # Detail page selector detection
-│
-├── helpers/                        # Utility Functions
-│   ├── clickToPageDetail.ts       # Navigate to detail pages
-│   ├── extractedDataToCSVRow.ts   # JSON to CSV conversion
-│   ├── extracted-data-csv-config.ts # CSV stream configuration
-│   ├── gotoNextPage.ts            # Pagination handling
-│   ├── handleScrapingError.ts     # Error logging
-│   ├── handleScrapingSuccess.ts   # Success logging
-│   ├── helpers.ts                 # General utility functions
-│   ├── isResponseObjectValuesEmpty.ts # Validation helper
-│   ├── lazyLoadPage.ts            # Lazy load handling
-│   ├── run-scraper-argv.ts        # CLI argument parser
-│   ├── runCleanerScript.ts        # Data cleaning orchestration
-│   └── summarizeRunResult.ts      # Result summary generation
-│
-├── cleaning/                       # Data Cleaning Scripts
-│   └── test.py                    # Python cleaning utilities
-│
-├── kirim-email/                    # Email Module
-│   └── send-email.ts              # Email delivery
-│
-├── schema/                         # Data Schemas & Validation
-│   ├── jobSchema.ts               # Job listing schema (Zod)
-│   ├── pageDetailSelectorSchema.ts # Detail selector schema
-│   └── schema.ts                  # General schemas
-│
-├── types/                          # TypeScript Interfaces
-│   ├── interface.ts               # Core interfaces
-│   ├── ScraperOptions.ts          # Configuration interface
-│   └── ScraperErrorClass.ts       # Error class definition
-│
-├── utils/                          # General Utilities
-│   ├── __dirname.ts               # Directory resolution
-│   ├── getDOMBody.ts              # DOM extraction
-│   └── readSourcesFromGoogleSheet.ts # Google Sheets integration
-│
-├── storage/                        # Output Directory
-│   └── *.csv                      # Generated CSV files
-│
-├── logs/                           # Logging Directory
-│   ├── usage-log.json             # JSON formatted logs
-│   └── usage-log.jsonl            # JSONL formatted logs
-│
-├── index.ts                        # Main entry point
-├── package.json                    # Dependencies
-├── tsconfig.json                   # TypeScript configuration
-└── README.md                       # This file
+└── 📁karirlink-ai-scraping                     # Project root
+    └── 📁.github                               # GitHub workflows and appmod configs
+        └── 📁appmod                            # appmod utilities
+            └── 📁appcat                        # app catalog config
+    └── 📁ai                                    # AI integration and extractor logic
+        ├── ai.ts                               # Gemini API client and helpers
+        ├── aiconfig.ts                         # AI prompts and config
+        ├── extractPageDetailData.ts            # Extract data from detail pages
+        ├── getPageDetailSelector.ts            # Detect page/detail selectors
+    └── 📁cleaning                              # Python cleaning scripts
+        ├── test.py                             # Pandas script for dedupe & standardize
+    └── 📁helpers                               # TypeScript helper utilities
+        ├── clickToPageDetail.ts                # Click into detail pages and extract HTML
+        ├── extracted-data-csv-config.ts        # CSV formatter/stream config
+        ├── extractedDataToCSVRow.ts            # Convert JSON to CSV rows
+        ├── gotoNextPage.ts                     # Pagination navigation logic
+        ├── gracefulShutdown.ts                 # Graceful shutdown helper
+        ├── handleScrapingError.ts              # Error logging
+        ├── handleScrapingSuccess.ts            # Success logging
+        ├── helpers.ts                          # Misc utilities
+        ├── isResponseObjectValuesEmpty.ts      # Validation helper
+        ├── lazyLoadPage.ts                     # Handle lazy-loaded content
+        ├── run-scraper-argv.ts                 # CLI argument parsing
+        ├── runCleanerScript.ts                 # Orchestrates Python cleaner
+        ├── summarizeRunResult.ts               # Build run summary and CSV
+    └── 📁kirim-email                           # Email sending utilities
+        ├── send-email.ts                       # Nodemailer integration
+    └── 📁schema                                # Zod schemas
+        ├── jobSchema.ts                        # Job listing schema
+        ├── pageDetailSelectorSchema.ts         # Selector schema
+        ├── schema.ts                           # Shared schemas
+    └── 📁types                                 # Type definitions
+        ├── CsvFile.ts                          # CSV types
+        ├── interface.ts                        # Core interfaces
+        ├── ScraperErrorClass.ts                # Error class type
+        ├── ScraperOptions.ts                   # Scraper options type
+    └── 📁utils                                 # Small utilities
+        ├── __dirname.ts                        # Cross-platform __dirname helper
+        ├── getDOMBody.ts                       # Extract DOM body from page
+        ├── readSourcesFromGoogleSheet.ts       # Read sources from Google Sheets
+        ├── utils.ts                            # Generic helpers
+    ├── .env.example                            # Example env variables
+    ├── .gitattributes                          # Git attributes (text/merge rules)
+    ├── .gitignore                              # Files to ignore in git
+    ├── index.ts                                # Main entrypoint
+    ├── package-lock.json                       # Lockfile
+    ├── package.json                            # Dependencies & scripts
+    ├── README.md                               # Project documentation
+    ├── requirements.txt                        # Python deps for cleaning
+    └── tsconfig.json                           # TypeScript configuration
 ```
 
 ---
@@ -385,8 +385,11 @@ Detects and validates pagination button selectors.
 4. Click into detail pages (if enabled)
 5. Clean extracted data using Python script
 6. Export to CSV/JSON
-7. Send email if configured
-8. Log metrics and usage
+   - Uses `helpers/summarizeRunResult.ts` and the CSV formatter in `helpers/extracted-data-csv-config.ts` for summary CSV creation/append/read.
+7. Ensure graceful shutdown and resource cleanup
+   - `helpers/gracefulShutdown.ts` handles closing browser instances, file streams, and other resources on exit.
+8. Send email if configured
+9. Log metrics and usage
 
 ### 4. Python Cleaning Module (`cleaning/test.py`)
 

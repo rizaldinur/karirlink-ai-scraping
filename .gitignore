@@ -143,3 +143,6 @@ output.json
 /storage
 *.xlsx
 *.csv
+
+# others
+run-script.sh

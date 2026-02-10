@@ -23,48 +23,59 @@ import { runCleanerScript } from "./helpers/runCleanerScript.ts";
 import { sendCSVToEmail } from "./kirim-email/send-email.ts";
 import path from "node:path";
 import { __dirname } from "./utils/__dirname.ts";
+import { gracefulShutdown } from "./helpers/gracefulShutdown.ts";
 
 const TIMESTAMP = new Date().toISOString().replace(/[:.]/g, "-");
-const STORAGE_PATH = path.join(__dirname, "..", "storage");
-const LOGS_PATH = path.join(__dirname, "..", "logs");
+const STORAGE_PATH = path.join(process.cwd(), "storage");
+const LOGS_PATH = path.join(process.cwd(), "logs");
 const LOG_FILE_PATH = path.join(LOGS_PATH, "usage-log.jsonl");
 const RESULT_FILE_PATH = path.join(STORAGE_PATH, "test-result.jsonl");
 const CSV_RESULT_FILE_PATH = path.join(
-  __dirname,
-  "..",
+  process.cwd(),
   "storage",
   `test-result-${TIMESTAMP}.csv`,
 );
 const CSV_RESULT_BASENAME = path.basename(CSV_RESULT_FILE_PATH);
+const RUN_SUMMARY_FILE_PATH = path.join(LOGS_PATH, "run-summary-logs.csv");
 
 const USAGE_DATA: Array<any> = [];
 const EXTRACTED_DATA: Array<any> = [];
 let NUMBER_OF_SOURCES: number = 0;
 
+const IS_PROD = process.env.NODE_ENV === "production";
+
 process.on("SIGINT", () => {
-  console.log("\nProcess interrupted.");
-  console.log("Menganalisis hasil akhir...");
-  summarizeRunResult(EXTRACTED_DATA, USAGE_DATA, NUMBER_OF_SOURCES);
+  gracefulShutdown("SIGINT", "Process interrupted", {
+    extractedData: EXTRACTED_DATA,
+    usageData: USAGE_DATA,
+    numberOfSources: NUMBER_OF_SOURCES,
+    summaryFilePath: RUN_SUMMARY_FILE_PATH,
+    stopReason: `Process interrupted (SIGINT).`,
+  });
   console.timeEnd("Process finished in ");
-  process.exit(0);
 });
+
 process.on("SIGTERM", () => {
-  console.log("\nProcess interrupted.");
-  console.log("Menganalisis hasil akhir...");
-  summarizeRunResult(EXTRACTED_DATA, USAGE_DATA, NUMBER_OF_SOURCES);
+  gracefulShutdown("SIGTERM", "Process interrupted", {
+    extractedData: EXTRACTED_DATA,
+    usageData: USAGE_DATA,
+    numberOfSources: NUMBER_OF_SOURCES,
+    summaryFilePath: RUN_SUMMARY_FILE_PATH,
+    stopReason: `Process interrupted (SIGTERM).`,
+  });
   console.timeEnd("Process finished in ");
-  process.exit(0);
 });
 
 process.on("uncaughtException", (err) => {
-  console.log("\nUncaught exception occurred.");
-  console.error(err);
-  console.log("Menganalisis hasil akhir...");
-  summarizeRunResult(EXTRACTED_DATA, USAGE_DATA, NUMBER_OF_SOURCES);
+  gracefulShutdown("", "Uncaught exception occurred: " + err, {
+    extractedData: EXTRACTED_DATA,
+    usageData: USAGE_DATA,
+    numberOfSources: NUMBER_OF_SOURCES,
+    summaryFilePath: RUN_SUMMARY_FILE_PATH,
+    stopReason: `Uncaught exception: ${err.message || err}`,
+  });
   console.timeEnd("Process finished in ");
-  process.exit(1);
 });
-6;
 
 async function runScraper(
   resultFilepath: string = RESULT_FILE_PATH,
@@ -100,9 +111,11 @@ async function runScraper(
   }
 
   const browser = await puppeteer.launch({
-    headless: headless,
-    defaultViewport: null,
-    args: ["--start-maximized"],
+    headless: IS_PROD ? true : headless,
+    defaultViewport: IS_PROD ? undefined : null,
+    args: IS_PROD
+      ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+      : ["--start-maximized"],
   });
   if (!fs.existsSync(STORAGE_PATH)) {
     fs.mkdirSync(STORAGE_PATH);
@@ -495,7 +508,14 @@ async function runScraper(
   } catch (error) {
     console.error(error);
   } finally {
-    summarizeRunResult(EXTRACTED_DATA, USAGE_DATA, NUMBER_OF_SOURCES);
+    console.log("Finally!");
+    summarizeRunResult(
+      EXTRACTED_DATA,
+      USAGE_DATA,
+      NUMBER_OF_SOURCES,
+      RUN_SUMMARY_FILE_PATH,
+      "Finished scraping from all sources",
+    );
     csvStream.end();
     await browser.close();
   }
