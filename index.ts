@@ -506,17 +506,23 @@ async function runScraper(
     }
 
     console.log();
-  } catch (error) {
-    console.error(error);
-  } finally {
-    console.log("Finally!");
     summarizeRunResult(
       EXTRACTED_DATA,
       USAGE_DATA,
       NUMBER_OF_SOURCES,
       RUN_SUMMARY_FILE_PATH,
-      "Finished scraping from all sources",
+      "Process finished normally",
     );
+  } catch (error) {
+    console.error(error);
+    summarizeRunResult(
+      EXTRACTED_DATA,
+      USAGE_DATA,
+      NUMBER_OF_SOURCES,
+      RUN_SUMMARY_FILE_PATH,
+      "Process finished normally with caught exception: " + error,
+    );
+  } finally {
     csvStream.end();
     await browser.close();
   }
