@@ -497,7 +497,7 @@ async function runScraper(
     console.log("\nSending file to email...");
 
     try {
-      await sendCSVToEmail(fileToSendPath, mailto);
+      await sendCSVToEmail(fileToSendPath, validMailto);
       console.log("Sending email successful.");
       await fs.unlink(CSV_RESULT_FILE_PATH, (err) => {
         if (err) throw err;
