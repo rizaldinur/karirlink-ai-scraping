@@ -15,9 +15,9 @@ const date = new Date().toLocaleDateString("id-ID", {
 });
 const timestamp = new Date().toLocaleDateString("id-ID").replace(/[/]/g, "-");
 
-export async function sendCSVToEmail(filename: string, to: string) {
+export async function sendCSVToEmail(filepath: string, to: string) {
   // PATH FILE CSV
-  const filePath = path.join(__dirname, "..", "storage", filename);
+  const filePath = path.resolve(filepath);
 
   // LOAD ENV
   const transporter = nodemailer.createTransport({

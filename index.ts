@@ -43,6 +43,7 @@ const EXTRACTED_DATA: Array<any> = [];
 let NUMBER_OF_SOURCES: number = 0;
 
 const IS_PROD = process.env.NODE_ENV === "production";
+console.time("Process finished in ");
 
 process.on("SIGINT", () => {
   gracefulShutdown("SIGINT", "Process interrupted", {
@@ -470,7 +471,7 @@ async function runScraper(
     console.log("Finished extracting data from all sources.");
     console.log("\nCleaning data...");
     let fileToSend: string | undefined = CSV_RESULT_BASENAME;
-    let fileToSendPath: string | undefined;
+    let fileToSendPath: string | undefined = CSV_RESULT_FILE_PATH;
     await runCleanerScript(CSV_RESULT_FILE_PATH)
       .then((res) => {
         console.log(res);
@@ -484,13 +485,13 @@ async function runScraper(
     console.log("\nSending file to email...");
 
     try {
-      await sendCSVToEmail(fileToSend, mailto);
+      await sendCSVToEmail(fileToSendPath, mailto);
       console.log("Sending email successful.");
       await fs.unlink(CSV_RESULT_FILE_PATH, (err) => {
         if (err) throw err;
       });
       console.log(`[DELETED] ${CSV_RESULT_FILE_PATH}`);
-      if (fileToSendPath) {
+      if (fileToSendPath !== CSV_RESULT_FILE_PATH) {
         await fs.unlink(fileToSendPath, (err) => {
           if (err) throw err;
         });
@@ -505,23 +506,28 @@ async function runScraper(
     }
 
     console.log();
-  } catch (error) {
-    console.error(error);
-  } finally {
-    console.log("Finally!");
     summarizeRunResult(
       EXTRACTED_DATA,
       USAGE_DATA,
       NUMBER_OF_SOURCES,
       RUN_SUMMARY_FILE_PATH,
-      "Finished scraping from all sources",
+      "Process finished normally",
     );
+  } catch (error) {
+    console.error(error);
+    summarizeRunResult(
+      EXTRACTED_DATA,
+      USAGE_DATA,
+      NUMBER_OF_SOURCES,
+      RUN_SUMMARY_FILE_PATH,
+      "Process finished normally with caught exception: " + error,
+    );
+  } finally {
     csvStream.end();
     await browser.close();
   }
 }
 
-console.time("Process finished in ");
 console.log("Process starting...");
 
 const args = await argv;
