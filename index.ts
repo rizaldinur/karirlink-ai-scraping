@@ -90,17 +90,29 @@ async function runScraper(
     maxJobDetailsNavigatorPerPage,
     maxPagesPerSource,
   } = options;
+  let validMailto: string | undefined;
   if (!mailto) {
     throw new Error("No email provided");
   } else {
+    const mails = mailto
+      .trim()
+      .split(",")
+      .map((mail) => mail.trim());
     const emailSchema = z.email({
-      error: "Invalid email",
+      error: "Invalid email format",
     });
-    const result = emailSchema.safeParse(mailto);
-    if (!result.success) {
-      throw new Error(result.error.message);
+
+    const validMails = mails.filter((mail) => {
+      const result = emailSchema.safeParse(mail.trim());
+      return result.success;
+    });
+
+    if (!validMails.length) {
+      throw new Error("No valid email(s)' provided");
     }
+    validMailto = validMails.join();
   }
+
   const included: string[] = [];
   if (includeCompanyFromSource && Array.isArray(includeCompanyFromSource)) {
     included.push(...includeCompanyFromSource);
@@ -485,7 +497,7 @@ async function runScraper(
     console.log("\nSending file to email...");
 
     try {
-      await sendCSVToEmail(fileToSendPath, mailto);
+      await sendCSVToEmail(fileToSendPath, validMailto);
       console.log("Sending email successful.");
       await fs.unlink(CSV_RESULT_FILE_PATH, (err) => {
         if (err) throw err;
