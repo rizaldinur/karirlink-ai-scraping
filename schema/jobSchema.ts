@@ -72,8 +72,9 @@ export const jobSchema = z.object({
     z.literal("").describe("Salary information is not provided."),
   ]),
   job_type: z
-    .enum(["full-time", "part-time", "contract", "internship", ""])
-    .default(""),
+    .enum(["Full time", "Part time", "Internship", "Freelance", ""])
+    .default("")
+    .describe("ONLY return empty string if you cannot determine the job type."),
   description: z
     .string()
     .optional()
