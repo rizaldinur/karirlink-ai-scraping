@@ -18,7 +18,7 @@ export const csvStream = format({
     "salary_max",
     "email_perusahaan",
     "telepon_perusahaan",
-    "posting_pate",
+    "posting_date",
     "end_date",
     "url",
   ],
