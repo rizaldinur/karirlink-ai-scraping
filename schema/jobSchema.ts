@@ -34,9 +34,15 @@ export const jobSchema = z.object({
       "Name of the company that opened the job listing. If not found, return ONLY empty string.",
     ),
   jobCategory: z
-    .enum(jobCategory)
-    .describe("Category of the job position. If not found, return 'Lainnya'.")
-    .default("Lainnya"),
+    .enum([...jobCategory, ""])
+    .describe(
+      `
+      Category of the job position. 
+
+      ONLY return empty string if you determine that the job is expired as instructed.
+      `,
+    )
+    .default(""),
   location: z
     .string()
     .optional()
