@@ -32,8 +32,8 @@ export function extractedDataToCSVRow(data: Data): Record<string, any> {
       data.success && data?.data?.salary && data?.data?.salary?.type
         ? data?.data?.salary?.type
         : "",
-    salary_min: 0,
-    salary_max: 0,
+    salary_min: null as number | null,
+    salary_max: null as number | null,
     posting_date: (data.success && data?.data?.posting_date) || "",
     end_date: (data.success && data?.data?.end_date) || "",
     url: (data.success && data?.data?.url) || "",
@@ -41,10 +41,12 @@ export function extractedDataToCSVRow(data: Data): Record<string, any> {
 
   if (data.success && data.data?.salary) {
     if (data.data.salary.type === "range") {
-      csvData.salary_min = data.data.salary.min;
-      csvData.salary_max = data.data.salary.max;
+      csvData.salary_min = data.data.salary.min ? data.data.salary.min : null;
+      csvData.salary_max = data.data.salary.max ? data.data.salary.max : null;
     } else {
-      csvData.salary_max = data.data.salary.amount;
+      csvData.salary_max = data.data.salary.amount
+        ? data.data.salary.amount
+        : null;
     }
   }
   return csvData;
