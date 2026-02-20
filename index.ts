@@ -9,7 +9,6 @@ import { clickToPageDetail } from "./helpers/clickToPageDetail.ts";
 import { gotoNextPage } from "./helpers/gotoNextPage.ts";
 import z from "zod";
 import { setTimeout } from "timers/promises";
-import { isResponseObjectValuesEmpty } from "./helpers/isResponseObjectValuesEmpty.ts";
 import type { ScraperOptions } from "./types/ScraperOptions.ts";
 import { argv } from "./helpers/run-scraper-argv.ts";
 import { summarizeRunResult } from "./helpers/summarizeRunResult.ts";
@@ -297,7 +296,8 @@ async function runScraper(
                     await setTimeout(30000);
                     if (success) {
                       const jobDetailData: any = safeParseJSON(data?.content);
-                      if (!isResponseObjectValuesEmpty(jobDetailData)) {
+
+                      if (jobDetailData) {
                         extractedData.push(jobDetailData);
                         jobListDetails.push(jobDetailData);
                         const writeResponse = {

@@ -30,15 +30,16 @@ df = pd.read_csv(
     on_bad_lines='skip'
 )
 
-# print(f" Total data awal: {len(df)}")
-# print(" Kolom terbaca:", df.columns.tolist())
-
 # --- 3. HAPUS HANYA success = false ---
 if 'success' in df.columns:
     df['success'] = df['success'].astype(str).str.lower().str.strip()
     before = len(df)
     df = df[df['success'] != 'false']
-    # print(f" Data success=false dibuang: {before - len(df)}")
+
+for col in ['posisi', 'job_description']:
+    if col in df.columns:
+        df[col] = df[col].astype(str).str.strip()
+        df = df[df[col].notna() & (df[col] != '')]
 
 # --- 4. HAPUS DUPLIKAT (title + location + jobDescription) ---
 kolom_duplikat = ['title', 'location', 'jobDescription']

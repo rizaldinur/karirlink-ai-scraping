@@ -73,8 +73,11 @@ export const jobSchema = z.object({
   ]),
   job_type: z
     .enum(["Full time", "Part time", "Internship", "Freelance", ""])
-    .default("")
-    .describe("ONLY return empty string if you cannot determine the job type."),
+    .default("").describe(`
+      IF you determine the job listing is expired as instructed, return ONLY empty string.
+
+      Else if the job is not yet expired and you cannot determine the job type, assume the job type to be 'Full time'.
+      `),
   description: z
     .string()
     .optional()
@@ -126,4 +129,4 @@ export const jobSchema = z.object({
     ),
 });
 
-export const jobJsonSchema = z.toJSONSchema(jobSchema);
+export const jobJsonSchema = z.toJSONSchema(jobSchema.nullable());
