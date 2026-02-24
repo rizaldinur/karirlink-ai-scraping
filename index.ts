@@ -332,11 +332,6 @@ async function runScraper(
                       streamUsageLog.write(`${JSON.stringify(data?.usage)}\n`);
                     } else {
                       console.log(`(${index + 1}) Error: ${data.error}`);
-                      const writeResponse = {
-                        success,
-                        message,
-                        data: { error: data?.error },
-                      };
 
                       const error = new ScraperError(message);
                       error.data = data?.error;

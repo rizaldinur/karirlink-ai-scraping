@@ -2,10 +2,6 @@ import { format } from "fast-csv";
 
 export const csvStream = format({
   headers: [
-    "timestamp",
-    "success",
-    "message",
-    "error_data",
     "nama_perusahaan",
     "posisi",
     "kategori_pekerjaan",

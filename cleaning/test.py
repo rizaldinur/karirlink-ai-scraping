@@ -31,10 +31,10 @@ df = pd.read_csv(
 )
 
 # --- 3. HAPUS HANYA success = false ---
-if 'success' in df.columns:
-    df['success'] = df['success'].astype(str).str.lower().str.strip()
-    before = len(df)
-    df = df[df['success'] != 'false']
+# if 'success' in df.columns:
+#     df['success'] = df['success'].astype(str).str.lower().str.strip()
+#     before = len(df)
+#     df = df[df['success'] != 'false']
 
 for col in ['posisi', 'job_description']:
     if col in df.columns:

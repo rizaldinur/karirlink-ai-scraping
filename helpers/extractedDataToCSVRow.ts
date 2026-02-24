@@ -1,5 +1,5 @@
 import { jobSchema } from "../schema/jobSchema.ts";
-import z, { success } from "zod";
+import z, { email, success } from "zod";
 
 type SuccessData = {
   success: true;
@@ -17,10 +17,6 @@ export type Data = SuccessData | ErrorData;
 
 export function extractedDataToCSVRow(data: Data): Record<string, any> {
   const csvData = {
-    timestamp: new Date().toISOString(),
-    success: data.success,
-    message: data.message,
-    error_data: data.success ? "" : JSON.stringify(data?.data?.error || {}),
     nama_perusahaan: (data.success && data?.data?.company) || "",
     posisi: (data.success && data?.data?.title) || "",
     kategori_pekerjaan: (data.success && data?.data?.jobCategory) || "",
@@ -34,6 +30,8 @@ export function extractedDataToCSVRow(data: Data): Record<string, any> {
         : "",
     salary_min: null as number | null,
     salary_max: null as number | null,
+    email_perusahaan: (data.success && data?.data?.companyEmail) || "",
+    telepon_perusahaan: (data.success && data?.data?.companyPhone) || "",
     posting_date: (data.success && data?.data?.posting_date) || "",
     end_date: (data.success && data?.data?.end_date) || "",
     url: (data.success && data?.data?.url) || "",
