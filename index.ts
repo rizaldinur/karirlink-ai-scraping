@@ -429,6 +429,7 @@ async function runScraper(
           }
           const { success, data, message } = await getNextButton(rawBody);
           if (success) {
+            console.log("To next page selector:", data.content);
             console.log(
               `Writing usage log data to write stream from getNextButton`,
             );
@@ -440,7 +441,7 @@ async function runScraper(
 
             try {
               await gotoNextPage(page, nextBtnSelector);
-              await setTimeout(15000);
+              await setTimeout(5000);
               await lazyLoadPage(page);
               pageCounter++;
             } catch (error: any) {

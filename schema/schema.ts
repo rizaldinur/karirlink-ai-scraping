@@ -63,8 +63,28 @@ const nextBtnSchema = z.object({
     .optional()
     .default("")
     .describe(
-      "SELECTOR for the next button or link(anchor) element. Can be combination of selectors or specific selector like class or id. Must be VALID selector for CSS only."
-    ),
+      `
+      CSS selector that identifies the clickable element used to navigate to next page, according to rules and examples below.
+
+      Rules:
+      - Must be a VALID CSS selector only (NO XPath, NO JavaScript).
+      - Must match exactly ONE element.
+      - Use positional selectors (e.g. :nth-of-type(), :nth-child()) when necessary.
+      - The element may be an <a>, <button>, or any clickable element.
+      - The element may or may not have an href attribute (navigation may be handled by JavaScript).
+      - Do NOT rely on JavaScript behavior; select based on DOM structure only.
+      - If multiple selectors are needed, combine them using valid CSS syntax (e.g. ".job-card a", ".detail-btn, .job-link").
+      - Do NOT return explanations, comments, or code.
+      - If no suitable selector exists, return an empty string "".
+
+     
+      Examples:
+      - ".this-link:nth-of-type(2)"
+      - ".pagination:nth-child(3) a"
+      - "ul.pagination > li:nth-child(5) a"
+      - etc
+      `
+    )
 });
 
 export const nextBtnJsonSchema = z.toJSONSchema(nextBtnSchema);
